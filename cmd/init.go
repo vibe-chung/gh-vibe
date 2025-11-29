@@ -37,13 +37,18 @@ func runInit(cmd *cobra.Command, _ []string) error {
 
 	fmt.Printf("Initializing repository %s/%s...\n", owner, repoName)
 
+	client, err := api.DefaultRESTClient()
+	if err != nil {
+		return fmt.Errorf("failed to create REST client: %w", err)
+	}
+
 	// Set branch protection for the specified branch
-	if err := setBranchProtection(owner, repoName, branchFlag); err != nil {
+	if err := setBranchProtection(client, owner, repoName, branchFlag); err != nil {
 		return fmt.Errorf("failed to set branch protection: %w", err)
 	}
 
 	// Update repository settings
-	if err := updateRepoSettings(owner, repoName); err != nil {
+	if err := updateRepoSettings(client, owner, repoName); err != nil {
 		return fmt.Errorf("failed to update repository settings: %w", err)
 	}
 
@@ -51,13 +56,8 @@ func runInit(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func setBranchProtection(owner, repo, branch string) error {
+func setBranchProtection(client *api.RESTClient, owner, repo, branch string) error {
 	fmt.Printf("Setting branch protection for %s branch...\n", branch)
-
-	client, err := api.DefaultRESTClient()
-	if err != nil {
-		return fmt.Errorf("failed to create REST client: %w", err)
-	}
 
 	// Branch protection payload
 	payload := map[string]interface{}{
@@ -84,13 +84,8 @@ func setBranchProtection(owner, repo, branch string) error {
 	return nil
 }
 
-func updateRepoSettings(owner, repo string) error {
+func updateRepoSettings(client *api.RESTClient, owner, repo string) error {
 	fmt.Println("Updating repository settings...")
-
-	client, err := api.DefaultRESTClient()
-	if err != nil {
-		return fmt.Errorf("failed to create REST client: %w", err)
-	}
 
 	// Repository settings payload
 	payload := map[string]interface{}{
