@@ -188,3 +188,66 @@ func TestSetupAICommandAcceptsNoArgs(t *testing.T) {
 		t.Errorf("setupAICmd should accept no arguments, got error: %v", err)
 	}
 }
+
+func TestUsageCommandExists(t *testing.T) {
+	if usageCmd == nil {
+		t.Error("usageCmd should not be nil")
+	}
+}
+
+func TestUsageCommandUse(t *testing.T) {
+	if usageCmd.Use != "usage" {
+		t.Errorf("Expected usageCmd.Use to be 'usage', got '%s'", usageCmd.Use)
+	}
+}
+
+func TestUsageCommandRegistered(t *testing.T) {
+	found := false
+	for _, cmd := range rootCmd.Commands() {
+		if cmd.Use == "usage" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("usage command should be registered with root command")
+	}
+}
+
+func TestUsageCommandRejectsArgs(t *testing.T) {
+	if usageCmd.Args == nil {
+		t.Error("usageCmd.Args should not be nil")
+		return
+	}
+
+	err := usageCmd.Args(usageCmd, []string{"unexpected-arg"})
+	if err == nil {
+		t.Error("usageCmd should reject unexpected arguments")
+	}
+}
+
+func TestUsageCommandAcceptsNoArgs(t *testing.T) {
+	if usageCmd.Args == nil {
+		t.Error("usageCmd.Args should not be nil")
+		return
+	}
+
+	err := usageCmd.Args(usageCmd, []string{})
+	if err != nil {
+		t.Errorf("usageCmd should accept no arguments, got error: %v", err)
+	}
+}
+
+func TestUsageCommandHasSummaryFlag(t *testing.T) {
+	flag := usageCmd.Flags().Lookup("summary")
+	if flag == nil {
+		t.Error("usageCmd should have a 'summary' flag")
+		return
+	}
+	if flag.DefValue != "false" {
+		t.Errorf("Expected summary flag default to be 'false', got '%s'", flag.DefValue)
+	}
+	if flag.Shorthand != "s" {
+		t.Errorf("Expected summary flag shorthand to be 's', got '%s'", flag.Shorthand)
+	}
+}
