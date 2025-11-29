@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 
-	"github.com/cli/go-gh/v2"
+	"github.com/cli/go-gh/v2/pkg/api"
 	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/spf13/cobra"
 )
@@ -52,24 +54,28 @@ func runInit(cmd *cobra.Command, _ []string) error {
 func setBranchProtection(owner, repo, branch string) error {
 	fmt.Printf("Setting branch protection for %s branch...\n", branch)
 
-	// Equivalent to:
-	// gh api --method PUT -H "Accept: application/vnd.github+json" \
-	//   /repos/{owner}/{repo}/branches/{branch}/protection \
-	//   -f required_status_checks=null -f enforce_admins=true \
-	//   -f required_pull_request_reviews=null -f restrictions=null \
-	//   -f allow_force_pushes=false -f allow_deletions=false
-	_, _, err := gh.Exec(
-		"api",
-		"--method", "PUT",
-		"-H", "Accept: application/vnd.github+json",
-		fmt.Sprintf("/repos/%s/%s/branches/%s/protection", owner, repo, branch),
-		"-f", "required_status_checks=null",
-		"-F", "enforce_admins=true",
-		"-f", "required_pull_request_reviews=null",
-		"-f", "restrictions=null",
-		"-F", "allow_force_pushes=false",
-		"-F", "allow_deletions=false",
-	)
+	client, err := api.DefaultRESTClient()
+	if err != nil {
+		return fmt.Errorf("failed to create REST client: %w", err)
+	}
+
+	// Branch protection payload
+	payload := map[string]interface{}{
+		"required_status_checks":        nil,
+		"enforce_admins":                true,
+		"required_pull_request_reviews": nil,
+		"restrictions":                  nil,
+		"allow_force_pushes":            false,
+		"allow_deletions":               false,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	endpoint := fmt.Sprintf("repos/%s/%s/branches/%s/protection", owner, repo, branch)
+	err = client.Put(endpoint, bytes.NewReader(body), nil)
 	if err != nil {
 		return err
 	}
@@ -81,21 +87,26 @@ func setBranchProtection(owner, repo, branch string) error {
 func updateRepoSettings(owner, repo string) error {
 	fmt.Println("Updating repository settings...")
 
-	// Equivalent to:
-	// gh api --method PATCH -H "Accept: application/vnd.github+json" \
-	//   /repos/{owner}/{repo} \
-	//   -F allow_squash_merge=true -F allow_merge_commit=false \
-	//   -F allow_rebase_merge=false -F allow_update_branch=true
-	_, _, err := gh.Exec(
-		"api",
-		"--method", "PATCH",
-		"-H", "Accept: application/vnd.github+json",
-		fmt.Sprintf("/repos/%s/%s", owner, repo),
-		"-F", "allow_squash_merge=true",
-		"-F", "allow_merge_commit=false",
-		"-F", "allow_rebase_merge=false",
-		"-F", "allow_update_branch=true",
-	)
+	client, err := api.DefaultRESTClient()
+	if err != nil {
+		return fmt.Errorf("failed to create REST client: %w", err)
+	}
+
+	// Repository settings payload
+	payload := map[string]interface{}{
+		"allow_squash_merge":  true,
+		"allow_merge_commit":  false,
+		"allow_rebase_merge":  false,
+		"allow_update_branch": true,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	endpoint := fmt.Sprintf("repos/%s/%s", owner, repo)
+	err = client.Patch(endpoint, bytes.NewReader(body), nil)
 	if err != nil {
 		return err
 	}
