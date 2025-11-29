@@ -75,10 +75,11 @@ func markPRReady(prNumber string) error {
 
 func mergePR(prNumber string) error {
 	fmt.Println("Merging PR with squash...")
-	args := []string{"pr", "merge", "--squash"}
+	args := []string{"pr", "merge"}
 	if prNumber != "" {
 		args = append(args, prNumber)
 	}
+	args = append(args, "--squash")
 
 	stdout, stderr, err := gh.Exec(args...)
 	if err != nil {
@@ -91,10 +92,11 @@ func mergePR(prNumber string) error {
 }
 
 func getPRTargetBranch(prNumber string) (string, error) {
-	args := []string{"pr", "view", "--json", "baseRefName", "--jq", ".baseRefName"}
+	args := []string{"pr", "view"}
 	if prNumber != "" {
 		args = append(args, prNumber)
 	}
+	args = append(args, "--json", "baseRefName", "--jq", ".baseRefName")
 
 	stdout, stderr, err := gh.Exec(args...)
 	if err != nil {
