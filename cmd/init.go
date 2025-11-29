@@ -8,16 +8,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var branchFlag string
+
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize repository settings and branch protection",
 	Long: `Initialize repository with recommended settings:
-- Sets branch protection for the main branch (enforce admins, no force pushes, no deletions)
+- Sets branch protection for the specified branch (enforce admins, no force pushes, no deletions)
 - Configures merge settings (squash merge only, allow update branch)`,
+	Args: cobra.NoArgs,
 	RunE: runInit,
 }
 
-func runInit(cmd *cobra.Command, args []string) error {
+func init() {
+	initCmd.Flags().StringVarP(&branchFlag, "branch", "b", "main", "Branch name to protect")
+}
+
+func runInit(cmd *cobra.Command, _ []string) error {
 	repo, err := repository.Current()
 	if err != nil {
 		return fmt.Errorf("failed to get current repository: %w", err)
@@ -28,8 +35,8 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Initializing repository %s/%s...\n", owner, repoName)
 
-	// Set branch protection for main branch
-	if err := setBranchProtection(owner, repoName); err != nil {
+	// Set branch protection for the specified branch
+	if err := setBranchProtection(owner, repoName, branchFlag); err != nil {
 		return fmt.Errorf("failed to set branch protection: %w", err)
 	}
 
@@ -42,12 +49,12 @@ func runInit(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func setBranchProtection(owner, repo string) error {
-	fmt.Println("Setting branch protection for main branch...")
+func setBranchProtection(owner, repo, branch string) error {
+	fmt.Printf("Setting branch protection for %s branch...\n", branch)
 
 	// Equivalent to:
 	// gh api --method PUT -H "Accept: application/vnd.github+json" \
-	//   /repos/{owner}/{repo}/branches/main/protection \
+	//   /repos/{owner}/{repo}/branches/{branch}/protection \
 	//   -f required_status_checks=null -f enforce_admins=true \
 	//   -f required_pull_request_reviews=null -f restrictions=null \
 	//   -f allow_force_pushes=false -f allow_deletions=false
@@ -55,7 +62,7 @@ func setBranchProtection(owner, repo string) error {
 		"api",
 		"--method", "PUT",
 		"-H", "Accept: application/vnd.github+json",
-		fmt.Sprintf("/repos/%s/%s/branches/main/protection", owner, repo),
+		fmt.Sprintf("/repos/%s/%s/branches/%s/protection", owner, repo, branch),
 		"-f", "required_status_checks=null",
 		"-F", "enforce_admins=true",
 		"-f", "required_pull_request_reviews=null",
