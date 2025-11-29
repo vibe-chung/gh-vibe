@@ -78,3 +78,64 @@ func TestInitCommandHasBranchFlag(t *testing.T) {
 		t.Errorf("Expected branch flag shorthand to be 'b', got '%s'", flag.Shorthand)
 	}
 }
+
+func TestReadyMergeCommandExists(t *testing.T) {
+	if readyMergeCmd == nil {
+		t.Error("readyMergeCmd should not be nil")
+	}
+}
+
+func TestReadyMergeCommandUse(t *testing.T) {
+	if readyMergeCmd.Use != "ready-merge [PR number]" {
+		t.Errorf("Expected readyMergeCmd.Use to be 'ready-merge [PR number]', got '%s'", readyMergeCmd.Use)
+	}
+}
+
+func TestReadyMergeCommandRegistered(t *testing.T) {
+	found := false
+	for _, cmd := range rootCmd.Commands() {
+		if cmd.Use == "ready-merge [PR number]" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("ready-merge command should be registered with root command")
+	}
+}
+
+func TestReadyMergeCommandAcceptsNoArgs(t *testing.T) {
+	if readyMergeCmd.Args == nil {
+		t.Error("readyMergeCmd.Args should not be nil")
+		return
+	}
+
+	err := readyMergeCmd.Args(readyMergeCmd, []string{})
+	if err != nil {
+		t.Errorf("readyMergeCmd should accept no arguments, got error: %v", err)
+	}
+}
+
+func TestReadyMergeCommandAcceptsOneArg(t *testing.T) {
+	if readyMergeCmd.Args == nil {
+		t.Error("readyMergeCmd.Args should not be nil")
+		return
+	}
+
+	err := readyMergeCmd.Args(readyMergeCmd, []string{"123"})
+	if err != nil {
+		t.Errorf("readyMergeCmd should accept one argument, got error: %v", err)
+	}
+}
+
+func TestReadyMergeCommandRejectsTwoArgs(t *testing.T) {
+	if readyMergeCmd.Args == nil {
+		t.Error("readyMergeCmd.Args should not be nil")
+		return
+	}
+
+	err := readyMergeCmd.Args(readyMergeCmd, []string{"123", "456"})
+	if err == nil {
+		t.Error("readyMergeCmd should reject more than one argument")
+	}
+}
