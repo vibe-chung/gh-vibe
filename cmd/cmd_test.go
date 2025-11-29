@@ -139,3 +139,52 @@ func TestReadyMergeCommandRejectsTwoArgs(t *testing.T) {
 		t.Error("readyMergeCmd should reject more than one argument")
 	}
 }
+
+func TestSetupAICommandExists(t *testing.T) {
+	if setupAICmd == nil {
+		t.Error("setupAICmd should not be nil")
+	}
+}
+
+func TestSetupAICommandUse(t *testing.T) {
+	if setupAICmd.Use != "setup-ai" {
+		t.Errorf("Expected setupAICmd.Use to be 'setup-ai', got '%s'", setupAICmd.Use)
+	}
+}
+
+func TestSetupAICommandRegistered(t *testing.T) {
+	found := false
+	for _, cmd := range rootCmd.Commands() {
+		if cmd.Use == "setup-ai" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("setup-ai command should be registered with root command")
+	}
+}
+
+func TestSetupAICommandRejectsArgs(t *testing.T) {
+	if setupAICmd.Args == nil {
+		t.Error("setupAICmd.Args should not be nil")
+		return
+	}
+
+	err := setupAICmd.Args(setupAICmd, []string{"unexpected-arg"})
+	if err == nil {
+		t.Error("setupAICmd should reject unexpected arguments")
+	}
+}
+
+func TestSetupAICommandAcceptsNoArgs(t *testing.T) {
+	if setupAICmd.Args == nil {
+		t.Error("setupAICmd.Args should not be nil")
+		return
+	}
+
+	err := setupAICmd.Args(setupAICmd, []string{})
+	if err != nil {
+		t.Errorf("setupAICmd should accept no arguments, got error: %v", err)
+	}
+}
