@@ -89,10 +89,11 @@ func updateRepoSettings(client *api.RESTClient, owner, repo string) error {
 
 	// Repository settings payload
 	payload := map[string]interface{}{
-		"allow_squash_merge":  true,
-		"allow_merge_commit":  false,
-		"allow_rebase_merge":  false,
-		"allow_update_branch": true,
+		"allow_squash_merge":     true,
+		"allow_merge_commit":     false,
+		"allow_rebase_merge":     false,
+		"allow_update_branch":    true,
+		"delete_branch_on_merge": true,
 	}
 
 	body, err := json.Marshal(payload)
