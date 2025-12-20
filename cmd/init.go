@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/cli/go-gh/v2/pkg/api"
 	"github.com/cli/go-gh/v2/pkg/repository"
@@ -13,12 +14,14 @@ import (
 var branchFlag string
 
 var initCmd = &cobra.Command{
-	Use:   "init",
+	Use:   "init [owner/repo]",
 	Short: "Initialize repository settings and branch protection",
 	Long: `Initialize repository with recommended settings:
 - Sets branch protection for the specified branch (enforce admins, no force pushes, no deletions)
-- Configures merge settings (squash merge only, allow update branch)`,
-	Args: cobra.NoArgs,
+- Configures merge settings (squash merge only, allow update branch)
+
+If owner/repo is not provided, uses the current repository.`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: runInit,
 }
 
@@ -26,14 +29,26 @@ func init() {
 	initCmd.Flags().StringVarP(&branchFlag, "branch", "b", "main", "Branch name to protect")
 }
 
-func runInit(cmd *cobra.Command, _ []string) error {
-	repo, err := repository.Current()
-	if err != nil {
-		return fmt.Errorf("failed to get current repository: %w", err)
-	}
+func runInit(cmd *cobra.Command, args []string) error {
+	var owner, repoName string
 
-	owner := repo.Owner
-	repoName := repo.Name
+	if len(args) > 0 {
+		// Parse owner/repo from argument
+		parts := strings.Split(args[0], "/")
+		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+			return fmt.Errorf("invalid repository format: expected 'owner/repo', got '%s'", args[0])
+		}
+		owner = parts[0]
+		repoName = parts[1]
+	} else {
+		// Use current repository
+		repo, err := repository.Current()
+		if err != nil {
+			return fmt.Errorf("failed to get current repository: %w", err)
+		}
+		owner = repo.Owner
+		repoName = repo.Name
+	}
 
 	fmt.Printf("Initializing repository %s/%s...\n", owner, repoName)
 

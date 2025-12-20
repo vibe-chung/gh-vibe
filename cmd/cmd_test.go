@@ -23,33 +23,21 @@ func TestInitCommandExists(t *testing.T) {
 }
 
 func TestInitCommandUse(t *testing.T) {
-	if initCmd.Use != "init" {
-		t.Errorf("Expected initCmd.Use to be 'init', got '%s'", initCmd.Use)
+	if initCmd.Use != "init [owner/repo]" {
+		t.Errorf("Expected initCmd.Use to be 'init [owner/repo]', got '%s'", initCmd.Use)
 	}
 }
 
 func TestInitCommandRegistered(t *testing.T) {
 	found := false
 	for _, cmd := range rootCmd.Commands() {
-		if cmd.Use == "init" {
+		if cmd.Use == "init [owner/repo]" {
 			found = true
 			break
 		}
 	}
 	if !found {
 		t.Error("init command should be registered with root command")
-	}
-}
-
-func TestInitCommandRejectsArgs(t *testing.T) {
-	if initCmd.Args == nil {
-		t.Error("initCmd.Args should not be nil")
-		return
-	}
-
-	err := initCmd.Args(initCmd, []string{"unexpected-arg"})
-	if err == nil {
-		t.Error("initCmd should reject unexpected arguments")
 	}
 }
 
@@ -62,6 +50,30 @@ func TestInitCommandAcceptsNoArgs(t *testing.T) {
 	err := initCmd.Args(initCmd, []string{})
 	if err != nil {
 		t.Errorf("initCmd should accept no arguments, got error: %v", err)
+	}
+}
+
+func TestInitCommandAcceptsOneArg(t *testing.T) {
+	if initCmd.Args == nil {
+		t.Error("initCmd.Args should not be nil")
+		return
+	}
+
+	err := initCmd.Args(initCmd, []string{"owner/repo"})
+	if err != nil {
+		t.Errorf("initCmd should accept one argument, got error: %v", err)
+	}
+}
+
+func TestInitCommandRejectsTwoArgs(t *testing.T) {
+	if initCmd.Args == nil {
+		t.Error("initCmd.Args should not be nil")
+		return
+	}
+
+	err := initCmd.Args(initCmd, []string{"owner/repo", "extra"})
+	if err == nil {
+		t.Error("initCmd should reject more than one argument")
 	}
 }
 
